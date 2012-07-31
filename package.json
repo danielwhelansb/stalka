@@ -1,0 +1,19 @@
+{
+  "author": "danielw <chobomuffin@gmail.com>",
+  "name": "stalka",
+  "description": "Stalk couch changes and do stuff with them",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/chobomuffin/batcho.git"
+  },
+  "engines": {
+    "node": ">= 0.6.14"
+  },
+  "dependencies": {
+    "request": "2.9.203",
+    "async" : "0.1.22",
+    "nano" : "3.1.0"
+  },
+  "devDependencies": {}
+}
