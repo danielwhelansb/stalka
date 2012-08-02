@@ -3,6 +3,7 @@
   "name": "stalka",
   "description": "Stalk couch changes (via longpoll) and do stuff with them",
   "version": "0.0.1",
+  "main": "lib/stalka",
   "repository": {
     "type": "git",
     "url": "git://github.com/chobomuffin/stalka.git"
