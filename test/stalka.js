@@ -117,8 +117,8 @@ describe('Stalka', function() {
   }),
   describe('#readChanges', function() {
     it("should default the feed to 'longpoll'", function(done) {
-      var stalka = fakeRequestStalka(function(url, callback) {
-        url.should.include("feed=longpoll");
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.url.should.include("feed=longpoll");
         callback();
       });
 
@@ -127,8 +127,8 @@ describe('Stalka', function() {
       });
     }),
     it("should query with any extra options", function(done) {
-      var stalka = fakeRequestStalka(function(url, callback) {
-        url.should.include("pizza=yummy");
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.url.should.include("pizza=yummy");
         callback();
       });
 
@@ -137,8 +137,8 @@ describe('Stalka', function() {
       });
     }),
     it("should query with the correct base url", function(done) {
-      var stalka = fakeRequestStalka(function(url, callback) {
-        url.should.match(/^http:\/\/somehost:1234\/somedb\/_changes?.*/);
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.url.should.match(/^http:\/\/somehost:1234\/somedb\/_changes?.*/);
         callback();
       });
 
@@ -147,7 +147,7 @@ describe('Stalka', function() {
       });
     }),
     it("should return the changes on a successful read", function(done) {
-      var stalka = fakeRequestStalka(function(url, callback) {
+      var stalka = fakeRequestStalka(function(options, callback) {
         callback(null, null, {changes: 'yay'});
       });
       stalka.readChanges("http://somehost:1234/somedb", null, function(err, changes) {
@@ -156,11 +156,21 @@ describe('Stalka', function() {
       });
     }),
     it("should return the error on an unsuccessful read", function(done) {
-      var stalka = fakeRequestStalka(function(url, callback) {
+      var stalka = fakeRequestStalka(function(options, callback) {
         callback("Error reading changes", null, null);
       });
       stalka.readChanges("http://somehost:1234/somedb", null, function(err, changes) {
         err.should.eql("Error reading changes");
+        done();
+      });
+    }),
+    it("should pass through headers option and remove it from options", function(done) {
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.headers.should.eql({'xyz':1});
+        options.url.should.not.include("xyz");
+        callback();
+      });
+      stalka.readChanges("http://somehost:1234/somedb", { headers: { 'xyz':1 }}, function(err, changes) {
         done();
       });
     });
