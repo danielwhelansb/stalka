@@ -348,6 +348,20 @@ describe('Stalka', function() {
         should.not.exist(err);
         done();
       });
+    }),
+    it("should continue processing when theres an empty changes body", function(done) {
+      stalka.readSequence = function(db, callback) {
+        callback(null, {lastSequence: 123});
+      };
+      stalka.readChanges = function(db, options, callback) {
+        stalka.stop();
+        callback(null, "");
+      };
+      stalka.start("http://randomhost:2422/somedb", function(changes, callback) {
+        should.fail("Changes should not be written when empty body");
+      }, null, function(err) {
+        done();
+      });
     });
   });
 });
