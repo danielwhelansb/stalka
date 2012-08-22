@@ -2,7 +2,7 @@
   "author": "Daniel Whelan <chobomuffin@gmail.com>",
   "name": "stalka",
   "description": "Stalk couch changes (via longpoll) and do stuff with them",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "lib/stalka",
   "repository": {
     "type": "git",
