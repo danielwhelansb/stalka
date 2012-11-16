@@ -1,7 +1,7 @@
 var should = require("should");
 var sandbox = require('sandboxed-module');
 
-var libpath = process.env['STALKA_COV'] ? '../lib-cov' : '../lib';
+var libpath = process.env.STALKA_COV ? '../lib-cov' : '../lib';
 
 // jscoverage support. This allows the global to be copied across to the new sandboxed context.
 if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
@@ -66,7 +66,7 @@ describe('Stalka', function() {
         err.should.equal("Failed to read sequence.");
         done();
       });
-    })
+    });
   }),
   describe('#updateSequence', function() {
     it("should use _local/feed as the sequence document id", function(done) {
@@ -183,7 +183,7 @@ describe('Stalka', function() {
       stalka.start("http://randomhost:2422/somedb", function(changes, callback) {
         callback();
       }, null, function(err) {
-        err.should.equal("Error reading sequence")
+        err.should.equal("Error reading sequence");
         done();
       });
     }),
