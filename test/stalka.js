@@ -126,6 +126,36 @@ describe('Stalka', function() {
         done();
       });
     }),
+    it("should not include since parameter when options is null", function(done) {
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.url.should.not.include("since");
+        callback();
+      });
+
+      stalka.readChanges("http://somehost:1234/somedb", null, function(err, changes) {
+        done();
+      });
+    }),
+    it("should not include since parameter when since property exists but its value is null", function(done) {
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.url.should.not.include("since");
+        callback();
+      });
+
+      stalka.readChanges("http://somehost:1234/somedb", { since: null }, function(err, changes) {
+        done();
+      });
+    }),
+    it("should not include since parameter when since property exists but its value is undefined", function(done) {
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.url.should.not.include("since");
+        callback();
+      });
+
+      stalka.readChanges("http://somehost:1234/somedb", { since: undefined }, function(err, changes) {
+        done();
+      });
+    }),
     it("should query with any extra options", function(done) {
       var stalka = fakeRequestStalka(function(options, callback) {
         options.url.should.include("pizza=yummy");
