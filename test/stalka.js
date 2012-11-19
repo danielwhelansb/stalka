@@ -250,7 +250,7 @@ describe('Stalka', function() {
         done();
       });
     }),
-    it("should reset retry count to 0 when read succeeds after previously failing", function(done) {
+    it("should reset retry count to 0 when read succeeds after previously failing due to ECONNRESET error", function(done) {
       var options = {},
         readCount = 0;
       stalka.readSequence = function(db, callback) {
@@ -270,7 +270,7 @@ describe('Stalka', function() {
         done();
       });
     }),
-    it("should set retry count to max retry count + 1 when read always fails", function(done) {
+    it("should set retry count to max retry count + 1 when read always fails due to ECONNRESET error", function(done) {
       this.timeout(5000); // larger timeout due to the need to simulate failure twice
       var options = { maxRetryCount: 1 },
         readCount = 0;
@@ -284,6 +284,25 @@ describe('Stalka', function() {
         callback();
       }, options, function(err) {
         options.retryCount.should.equal(2);
+        done();
+      });
+    }),
+    it("should not set retry count opt and should pass error to main callback when read always fails due to non ECONNRESET error", function(done) {
+      this.timeout(5000); // larger timeout due to the need to simulate failure twice
+      var options = { maxRetryCount: 1 },
+        readCount = 0;
+      stalka.readSequence = function(db, callback) {
+        var error = new Error('No space left');
+        error.code = 'ENOSPC';
+        callback(error);
+        readCount += 1;
+      };
+      stalka.start("http://randomhost:2423/somedb", function(changes, callback) {
+        callback();
+      }, options, function(err) {
+        should.not.exist(options.retryCount);
+        err.message.should.equal('No space left');
+        err.code.should.equal('ENOSPC');
         done();
       });
     }),
