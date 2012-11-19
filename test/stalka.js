@@ -250,6 +250,43 @@ describe('Stalka', function() {
         done();
       });
     }),
+    it("should reset retry count to 0 when read succeeds after previously failing", function(done) {
+      var options = {},
+        readCount = 0;
+      stalka.readSequence = function(db, callback) {
+        if (readCount === 0) {
+          var error = new Error('Socket hang up');
+          error.code = 'ECONNRESET';
+          callback(error);
+          readCount += 1;
+        } else {
+          callback(null, {lastSequence: 11});
+        }
+      };
+      stalka.start("http://randomhost:2423/somedb", function(changes, callback) {
+        callback();
+      }, options, function(err) {
+        options.retryCount.should.equal(0);
+        done();
+      });
+    }),
+    it("should set retry count to max retry count + 1 when read always fails", function(done) {
+      this.timeout(5000); // larger timeout due to the need to simulate failure twice
+      var options = { maxRetryCount: 1 },
+        readCount = 0;
+      stalka.readSequence = function(db, callback) {
+        var error = new Error('Socket hang up');
+        error.code = 'ECONNRESET';
+        callback(error);
+        readCount += 1;
+      };
+      stalka.start("http://randomhost:2423/somedb", function(changes, callback) {
+        callback();
+      }, options, function(err) {
+        options.retryCount.should.equal(2);
+        done();
+      });
+    }),
     it("should read changes from the specified start sequence", function(done) {
       stalka.readSequence = function(db, callback) {
         callback(null, {lastSequence: 11});
