@@ -36,6 +36,23 @@ describe('Stalka Integration', function() {
             should.not.exist(err);
           });
         }),
+        it('retries the request 2 times then succeed', function(done) {
+          app.get('/def/_changes', function(req, res) {
+            if (requestCount < 1) {
+              req.socket.destroy();
+              requestCount++;
+            } else {
+              res.json({results: [], last_seq: 1000});
+            }
+          });
+
+          stalka.start('http://localhost:1337/def', function(changes, cb) {
+            should.exist(changes.last_seq);
+            done();
+          }, { since: 999, retrySleepMs: 100 }, function(err) {
+            should.not.exist(err);
+          });
+        }),
         it('fails when it retries more than 3 times', function(done) {
           app.get('/abc/_changes', function(req, res) {
             req.socket.destroy();

@@ -1,7 +1,7 @@
 var should = require("should");
 var sandbox = require('sandboxed-module');
 
-var libpath = process.env['STALKA_COV'] ? '../lib-cov' : '../lib';
+var libpath = process.env.STALKA_COV ? '../lib-cov' : '../lib';
 
 // jscoverage support. This allows the global to be copied across to the new sandboxed context.
 if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
@@ -66,7 +66,7 @@ describe('Stalka', function() {
         err.should.equal("Failed to read sequence.");
         done();
       });
-    })
+    });
   }),
   describe('#updateSequence', function() {
     it("should use _local/feed as the sequence document id", function(done) {
@@ -123,6 +123,36 @@ describe('Stalka', function() {
       });
 
       stalka.readChanges("http://somehost:1234/somedb", null, function(err, changes) {
+        done();
+      });
+    }),
+    it("should not include since parameter when options is null", function(done) {
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.url.should.not.include("since");
+        callback();
+      });
+
+      stalka.readChanges("http://somehost:1234/somedb", null, function(err, changes) {
+        done();
+      });
+    }),
+    it("should not include since parameter when since property exists but its value is null", function(done) {
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.url.should.not.include("since");
+        callback();
+      });
+
+      stalka.readChanges("http://somehost:1234/somedb", { since: null }, function(err, changes) {
+        done();
+      });
+    }),
+    it("should not include since parameter when since property exists but its value is undefined", function(done) {
+      var stalka = fakeRequestStalka(function(options, callback) {
+        options.url.should.not.include("since");
+        callback();
+      });
+
+      stalka.readChanges("http://somehost:1234/somedb", { since: undefined }, function(err, changes) {
         done();
       });
     }),
@@ -183,7 +213,7 @@ describe('Stalka', function() {
       stalka.start("http://randomhost:2422/somedb", function(changes, callback) {
         callback();
       }, null, function(err) {
-        err.should.equal("Error reading sequence")
+        err.should.equal("Error reading sequence");
         done();
       });
     }),
@@ -217,6 +247,62 @@ describe('Stalka', function() {
       stalka.start("http://randomhost:2422/somedb", function(changes, callback) {
         callback();
       }, null, function(err) {
+        done();
+      });
+    }),
+    it("should reset retry count to 0 when read succeeds after previously failing due to ECONNRESET error", function(done) {
+      var options = {},
+        readCount = 0;
+      stalka.readSequence = function(db, callback) {
+        if (readCount === 0) {
+          var error = new Error('Socket hang up');
+          error.code = 'ECONNRESET';
+          callback(error);
+          readCount += 1;
+        } else {
+          callback(null, {lastSequence: 11});
+        }
+      };
+      stalka.start("http://randomhost:2423/somedb", function(changes, callback) {
+        callback();
+      }, options, function(err) {
+        options.retryCount.should.equal(0);
+        done();
+      });
+    }),
+    it("should set retry count to max retry count + 1 when read always fails due to ECONNRESET error", function(done) {
+      this.timeout(5000); // larger timeout due to the need to simulate failure twice
+      var options = { maxRetryCount: 1 },
+        readCount = 0;
+      stalka.readSequence = function(db, callback) {
+        var error = new Error('Socket hang up');
+        error.code = 'ECONNRESET';
+        callback(error);
+        readCount += 1;
+      };
+      stalka.start("http://randomhost:2423/somedb", function(changes, callback) {
+        callback();
+      }, options, function(err) {
+        options.retryCount.should.equal(2);
+        done();
+      });
+    }),
+    it("should not set retry count opt and should pass error to main callback when read always fails due to non ECONNRESET error", function(done) {
+      this.timeout(5000); // larger timeout due to the need to simulate failure twice
+      var options = { maxRetryCount: 1 },
+        readCount = 0;
+      stalka.readSequence = function(db, callback) {
+        var error = new Error('No space left');
+        error.code = 'ENOSPC';
+        callback(error);
+        readCount += 1;
+      };
+      stalka.start("http://randomhost:2423/somedb", function(changes, callback) {
+        callback();
+      }, options, function(err) {
+        should.not.exist(options.retryCount);
+        err.message.should.equal('No space left');
+        err.code.should.equal('ENOSPC');
         done();
       });
     }),
