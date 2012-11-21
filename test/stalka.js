@@ -46,9 +46,13 @@ describe('Stalka', function() {
         done();
       });
     }),
-    it("should return a lastSequence of 0 when its not found", function(done) {
+    it("should create sequenceDocument and return a lastSequence of 0 when sequence document is not found", function(done) {
       var db = { 
-        get: function(id, callback) { callback({status_code: 404}, null); }
+        get: function(id, callback) { callback({status_code: 404}, null); },
+        insert: function(document, id, callback) {
+          id.should.equal("_local/feed");
+          callback();
+        }
       };
 
       stalka.readSequence(db, function(err, body) {
