@@ -324,6 +324,24 @@ describe('Stalka', function() {
         done();
       });
     }),
+    it("should reset retry count to 0 when read succeeds after previously failing due to database being deleted", function(done) {
+      var options = {},
+        readCount = 0;
+      stalka.readSequence = function(db, callback) {
+        if (readCount === 0) {
+          callback(new Error('no_db_file'));
+          readCount += 1;
+        } else {
+          callback(null, {lastSequence: 11});
+        }
+      };
+      stalka.start("http://randomhost:2423/somedb", function(changes, callback) {
+        callback();
+      }, options, function(err) {
+        options.retryCount.should.equal(0);
+        done();
+      });
+    }),
     it("should read changes from the specified start sequence", function(done) {
       stalka.readSequence = function(db, callback) {
         callback(null, {lastSequence: 11});
