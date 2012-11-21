@@ -46,9 +46,13 @@ describe('Stalka', function() {
         done();
       });
     }),
-    it("should return a lastSequence of 0 when its not found", function(done) {
+    it("should create sequenceDocument and return a lastSequence of 0 when sequence document is not found", function(done) {
       var db = { 
-        get: function(id, callback) { callback({status_code: 404}, null); }
+        get: function(id, callback) { callback({status_code: 404}, null); },
+        insert: function(document, id, callback) {
+          id.should.equal("_local/feed");
+          callback();
+        }
       };
 
       stalka.readSequence(db, function(err, body) {
@@ -303,6 +307,42 @@ describe('Stalka', function() {
         should.not.exist(options.retryCount);
         err.message.should.equal('No space left');
         err.code.should.equal('ENOSPC');
+        done();
+      });
+    }),
+    it("should reset retry count to 0 when read succeeds after previously failing due to document update conflict error", function(done) {
+      var options = {},
+        readCount = 0;
+      stalka.readSequence = function(db, callback) {
+        if (readCount === 0) {
+          callback(new Error('Document update conflict.'));
+          readCount += 1;
+        } else {
+          callback(null, {lastSequence: 11});
+        }
+      };
+      stalka.start("http://randomhost:2423/somedb", function(changes, callback) {
+        callback();
+      }, options, function(err) {
+        options.retryCount.should.equal(0);
+        done();
+      });
+    }),
+    it("should reset retry count to 0 when read succeeds after previously failing due to database being deleted", function(done) {
+      var options = {},
+        readCount = 0;
+      stalka.readSequence = function(db, callback) {
+        if (readCount === 0) {
+          callback(new Error('no_db_file'));
+          readCount += 1;
+        } else {
+          callback(null, {lastSequence: 11});
+        }
+      };
+      stalka.start("http://randomhost:2423/somedb", function(changes, callback) {
+        callback();
+      }, options, function(err) {
+        options.retryCount.should.equal(0);
         done();
       });
     }),
