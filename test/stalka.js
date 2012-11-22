@@ -60,6 +60,25 @@ describe('Stalka', function() {
         done();
       });
     }),
+    it("should write lastSequence 0 stat when sequence document is not found", function(done) {
+      var db = { 
+        get: function(id, callback) { callback({status_code: 404}, null); },
+        insert: function(document, id, callback) {
+          id.should.equal("_local/feed");
+          callback();
+        }
+      };
+      var stalka = sandbox.require(libpath + '/stalka', {
+        requires: {'nano': fakenano, 'request': fakerequest}
+      });
+
+      stalka.registerStatsWriter(function (lastSequence) {
+        lastSequence.should.equal(0);
+        done();
+      });
+      stalka.readSequence(db, function(err, body) {
+      });
+    }),
     it("should return an error when an error occurs", function(done) {
       var db = { 
         get: function(id, callback) { callback("Failed to read sequence.", null); }
