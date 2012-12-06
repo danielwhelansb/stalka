@@ -495,6 +495,10 @@ describe('Stalka', function() {
       });
     }),
     it("should continue processing when theres an invalid changes body", function(done) {
+      var statsSequence;
+      stalka.statsWriter = function (sequence) {
+        statsSequence = sequence;
+      };
       stalka.readSequence = function(db, callback) {
         callback(null, {lastSequence: 123});
       };
@@ -507,6 +511,7 @@ describe('Stalka', function() {
       }, null, function(err) {
         done();
       });
+      statsSequence.should.equal(123);
     });
   });
 });
